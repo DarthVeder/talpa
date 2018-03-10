@@ -1,0 +1,29 @@
+Specifications
+Beechcraft King Air B200
+General
+Variant 	250[84] 	350i[85]/350ER[86]
+Crew 	1-2
+Capacity 	10 	11
+Length 	43 ft 10 in / 13.36 m 	46 ft 8 in / 14.22 m
+Span 	57 ft 11 in / 17.65 m
+Height 	14 ft 10 in / 4.52 m 	14 ft 4 in / 4.37 m
+Cabin L × W × H 	16'8" × 4'6" × 4'9"
+5.08 × 1.37 × 1.45 m 	19'6" × 4'6" × 4'9"
+5.94 × 1.37 × 1.45 m
+Weights
+MTOW 	13,420 lb / 6,087 kg 	15,000 lb / 6,804 kg
+ER: 16,500 lb / 7,484 kg
+OEW[a] 	8,830 lb / 4,005 kg 	9,955 lb / 4,516 kg
+ER: 9,455 lb / 4,289 kg[b]
+Useful load 	4,670 lb / 2,118 kg 	5,145 lb / 2,334 kg
+ER: 7,145 lb / 3,241 kg
+Engines
+Engine type (2×) 	PWC PT6A-52 	PWC PT6A-60A
+Power or Thrust 	850 shp / 625 kW 	1,050 shp / 783 kW
+Performance
+Maximum Cruise 	310 kt / 574 km/h 	312 kt / 578 km/h
+ER: 303 kt / 561 km/h
+Ferry Range 	1,720 nm / 3,185 km 	1,806 nm / 3,345 km
+ER: 2,670 nm / 4,945 km
+Takeoff 	2,111 ft / 643 m[c] 	350i: 3,300 ft / 1,006 m
+Ceiling 	35,000 ft / 10,668 m

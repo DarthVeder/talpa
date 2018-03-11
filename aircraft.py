@@ -10,6 +10,11 @@ class Aircraft:
         '''Returns an aircraft float value from a string variable'''
         return float( self.config[svalue] )
 
+    def getString(self, sstring):
+        '''Returns an aircraft string datafrom a string variable'''
+        return self.config[sstring]
+
+
     def selectAircraft(self):
         self._finalizeData()
 

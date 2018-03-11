@@ -13,6 +13,12 @@ if __name__ == '__main__':
     import menu.main
 
     acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
+    if acft.getString('type') == 'jet':
+        pass
+    elif acft.getString('type') == 'turboprop':
+        pass
+    elif acft.getString('type') == 'propeller':
+        pass
 
 
 

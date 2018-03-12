@@ -18,4 +18,7 @@ def density(h_m):
     return sigma*rhoSL
 
     
-    
+def density(p_Pa, T_K):
+    rho_SI = p_Pa / (Rair*T_K)
+
+    return rho_SI

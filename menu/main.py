@@ -19,8 +19,6 @@ Menu for choosing talpa options:
 import sys
 import configparser
 import os
-
-sys.path.append('../')
 import aircraft
 import airports
 
@@ -118,11 +116,10 @@ def airportMenu():
 
 def aircraftMenu():
     config = configparser.ConfigParser(inline_comment_prefixes=(';','#'))
-    if 'aircrafts' in sys.modules:
+    if 'aircraft' in sys.modules:
+        config.read( os.path.dirname(sys.modules['aircraft'].__file__) + r'\data\aircrafts.cfg' )
         print('Read A')
-        config.read( os.path.dirname(sys.modules['aircrafts']) + r'\data\aircrafts.cfg' )
     else:
-        print('Read B')
         config.read(r'..\data\aircrafts.cfg')
 
     in_menu = True

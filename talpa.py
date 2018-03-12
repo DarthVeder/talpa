@@ -3,18 +3,30 @@
 # and landing given runways length (TORA, TODA, ASDA, LDA)
 # and aircraft main characteristics.
 
-from math import sqrt 
+
 import aircraft
-import airports
+import airports.database
 import isa
-import FAA
+import FAA.FAR25.perf
 
 if __name__ == '__main__':
     import menu.main
+    debug = True
 
-    acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
+    if debug:
+        apt = airports.database.airport(id='LIPE', altitude=123.0, magvar=1.5)
+        rwy = [airports.database.runway(id='12', hgd_t=116.75, length_ft=9179.0, type='Asphalt'),
+               airports.database.runway(id='30', hgd_t=296.75, length_ft=9179.0, type='Asphalt')]
+        qnh_hPa = 1013.15
+        T_degC = 35.0
+        acft = aircraft.Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
+
+    else:
+        acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
+
+    # Main Body section
     if acft.getString('type') == 'jet':
-        pass
+        FAA.FAR25.perf.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
     elif acft.getString('type') == 'turboprop':
         pass
     elif acft.getString('type') == 'propeller':

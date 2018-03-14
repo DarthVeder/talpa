@@ -1,4 +1,4 @@
-import math
+from math import pi
 import configparser
 
 class Aircraft:
@@ -10,9 +10,6 @@ class Aircraft:
     def readConfiguration(cls, xml_file, acft_id):
         config = configparser.ConfigParser(inline_comment_prefixes=(';', '#'))
         config.read(xml_file)
-        #print(config.sections())
-        #for k in config[acft_id].keys():
-        #    print(k)
 
         acft = cls(config[acft_id])
         return acft
@@ -26,8 +23,8 @@ class Aircraft:
         return self.config[sstring].strip('"\'')
 
 
-    def selectAircraft(self):
-        self._finalizeData()
+    # def selectAircraft(self):
+    #     self._finalizeData()
 
     def _finalizeData(self):
         b = self.getValue('b')
@@ -48,7 +45,50 @@ class Aircraft:
         return self.getValue('Pse') * self.getValue('number_of_engines')
 
     def takeoffFlaps(self):
-        pass
+        sflaps = self.getString('flaps').split(',')
+        to_flap = []
+
+        for f in sflaps:
+            if 'T' in f:
+                to_flap.append( int(f[:-1]) )
+
+        if len(to_flap) == 0:
+            print('Aircraft is missing at least one takeoff flap setting (T)')
+            exit(1)
+
+        return to_flap
 
     def landingFlaps(self):
-        pass
+        sflaps = self.getString('flaps').split(',')
+        landflap = []
+
+        for f in sflaps:
+            if 'L' in f:
+                land_flap.append(int(f[:-1]))
+
+        if len(land_flap) == 0:
+            print('Aircraft is missing at least one landing flap setting (L)')
+            exit(1)
+
+        return land_flap
+
+    def CLmax(self, f_deg):
+        dCLdf = self.getValue('dCLdf')
+        CLmax = self.getValue('CLmax') + dCLdf * (f_deg/180.0*pi)
+
+        return CLmax
+
+    def CD(self, CL, f, gear):
+        CD0 = self.getValue('CD0')
+        CDflaps = self.getValue('dCLdf') * (f/180.0*pi)
+        CDgear = self.getValue('dCDgear') * gear
+        k = 1 / (pi*self.AR*self.getValue('e'))
+
+        return CD0+CDflaps+CDgear+k*CL*CL
+
+    def checkWeight(self, W):
+        MTOM = self.getValue('MTOM')
+        if W > MTOM:
+            W = MTOM
+
+        return W

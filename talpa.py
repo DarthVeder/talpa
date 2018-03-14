@@ -7,7 +7,7 @@
 import aircraft
 import airports.database
 import isa
-import FAA.FAR25.perf
+import FAA.FAR25.performance
 
 if __name__ == '__main__':
     import menu.main
@@ -26,7 +26,12 @@ if __name__ == '__main__':
 
     # Main Body section
     if acft.getString('type') == 'jet':
-        FAA.FAR25.perf.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
+        result = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
+        print( result )
+        RTOW = FAA.FAR25.performance.climb(acft, apt, rwy, qnh_hPa, T_degC)
+        print('f    RTOW     FLAG')
+        for f in sorted( RTOW.keys() ):
+            print( '{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag) )
     elif acft.getString('type') == 'turboprop':
         pass
     elif acft.getString('type') == 'propeller':

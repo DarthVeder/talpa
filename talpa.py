@@ -11,7 +11,7 @@ import FAA.FAR25.performance
 
 if __name__ == '__main__':
     import menu.main
-    debug = False
+    debug = True
 
     if debug:
         apt = airports.database.airport(id='LIPE', altitude=123.0, magvar=1.5)
@@ -20,6 +20,8 @@ if __name__ == '__main__':
         qnh_hPa = 1013.15
         T_degC = 15.0
         acft = aircraft.Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
+
+        acft.print()
 
     else:
         acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()

@@ -1,5 +1,6 @@
 from math import pi, pow
 import configparser
+import re
 
 class Aircraft:
     def __init__(self, config):
@@ -48,10 +49,12 @@ class Aircraft:
     def takeoffFlaps(self):
         sflaps = self.getString('flaps').split(',')
         to_flap = []
+        regex = r"\d+"
 
         for f in sflaps:
             if 'T' in f:
-                to_flap.append( int(f[:-1]) )
+                m = re.search(regex,f)
+                to_flap.append( int(f[m.start():m.end()]) )
 
         if len(to_flap) == 0:
             print('Aircraft is missing at least one takeoff flap setting (T)')
@@ -62,10 +65,12 @@ class Aircraft:
     def landingFlaps(self):
         sflaps = self.getString('flaps').split(',')
         land_flap = []
+        regex = r"\d+"
 
         for f in sflaps:
             if 'L' in f:
-                land_flap.append(int(f[:-1]))
+                m = re.search(regex, f)
+                land_flap.append(int(f[m.start():m.end()]))
 
         if len(land_flap) == 0:
             print('Aircraft is missing at least one landing flap setting (L)')

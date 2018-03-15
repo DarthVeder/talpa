@@ -22,7 +22,7 @@ def takeoff(acft, apt, rwy, qnh_hPa, T_degC):
     T_K = T_degC + 273.15
     sigma = isa.sigma(qnh_Pa, T_K)
 
-    result = ' TAKEOFF PERFORMANCE ANALYSIS\n'
+    result = ' \\* TAKEOFF PERFORMANCE ANALYSIS *\\ \n'
     for f in to_flap:
         CLmaxTO =  1.2 #acft.getValue('CLmaxTO')
         S = acft.getValue('S')
@@ -77,7 +77,7 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax/(1.2*1.2) # @ V2 = 1.2VS1g
-        CD = acft.CD(CLTO,f,gear)
+        CD = acft.CD(CLTO,f,gear,1)
         E = CLTO/CD
         coeff = neng/(neng-1.0)*( 1./E + initial_ramp_angle[neng] )
         RTOW = acft.Thrust(delta)/coeff
@@ -94,7 +94,7 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax/(1.1*1.1) # @ VLOF = 1.1VS1g
-        CD = acft.CD(CLTO,f,gear)
+        CD = acft.CD(CLTO,f,gear,1)
         E = CLTO/CD
         coeff = neng/(neng-1.0)*( 1./E + climb_transition_angle[neng] )
         RTOW = acft.Thrust(delta)/coeff
@@ -175,7 +175,7 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC):
     gear = 1
     for f in land_flap:
         CLmax = acft.CLmax(f)
-        CLLND = CLmax / (1.65 * 1.65)  # @ Vapp = 1.65VS1g
+        CLLND = CLmax / (1.3 * 1.3)  # @ Vapp = 1.3VS1g
         CD = acft.CD(CLLND, f, gear)
         E = CLLND / CD
         coeff = neng / (neng - 1.0) * (1. / E + initial_ramp_angle[neng])

@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, pow
 import configparser
 
 class Aircraft:
@@ -19,7 +19,7 @@ class Aircraft:
         return float( self.config[svalue] )
 
     def getString(self, sstring):
-        '''Returns an aircraft string datafrom a string variable'''
+        '''Returns an aircraft string data from a string variable'''
         return self.config[sstring].strip('"\'')
 
 
@@ -36,10 +36,11 @@ class Aircraft:
         for k in self.config.keys():
             print( '{}={}'.format(k,self.config[k]) )
 
-        print( [int(x) for x in self.config['flaps'].split(',') ] )
+        print( 'Takeoff Flaps setting(s) {}'.format([x for x in self.takeoffFlaps() ]) )
+        print( 'Landing Flaps setting(s) {}'.format([x for x in self.landingFlaps() ]) )
 
-    def Thrust(self, delta):
-        return self.getValue('Tse') * self.getValue('number_of_engines')
+    def Thrust(self, delta, derate=0.0):
+        return (1.0-derate/100.0) *self.getValue('Tse') * self.getValue('number_of_engines')
 
     def Power(self, delta):
         return self.getValue('Pse') * self.getValue('number_of_engines')
@@ -78,11 +79,14 @@ class Aircraft:
 
         return CLmax
 
-    def CD(self, CL, f_deg, gear):
+    def CD(self, CL, f_deg, gear, ige=0):
         CD0 = self.getValue('CD0')
         CDflaps = self.getValue('dCDdf') * (f_deg/180.0*pi)
         CDgear = self.getValue('dCDgear') * gear
         k = 1 / (pi*self.AR*self.getValue('e'))
+        if ige == 1:
+            # Rymer formula 12.61 pag 304 for h/b = 1/2
+            k = k * 33.0 * pow(0.5,1.5) / ( 1 + 33*pow(0.5,1.5) )
 
         return CD0+CDflaps+CDgear+k*CL*CL
 

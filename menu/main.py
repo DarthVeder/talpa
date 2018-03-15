@@ -82,6 +82,7 @@ def build():
                     print('Aircraft not set')
         elif uchoice == EXIT:
             in_menu = False
+            exit(0)
         else:
             print('Choice not yet implemented')
 

@@ -60,7 +60,7 @@ class Aircraft:
 
     def landingFlaps(self):
         sflaps = self.getString('flaps').split(',')
-        landflap = []
+        land_flap = []
 
         for f in sflaps:
             if 'L' in f:
@@ -78,9 +78,9 @@ class Aircraft:
 
         return CLmax
 
-    def CD(self, CL, f, gear):
+    def CD(self, CL, f_deg, gear):
         CD0 = self.getValue('CD0')
-        CDflaps = self.getValue('dCLdf') * (f/180.0*pi)
+        CDflaps = self.getValue('dCDdf') * (f_deg/180.0*pi)
         CDgear = self.getValue('dCDgear') * gear
         k = 1 / (pi*self.AR*self.getValue('e'))
 
@@ -90,5 +90,12 @@ class Aircraft:
         MTOM = self.getValue('MTOM')
         if W > MTOM:
             W = MTOM
+
+        return W
+
+    def checkLandingWeight(self, W):
+        MLM = self.getValue('MLM')
+        if W > MLM:
+            W = MLM
 
         return W

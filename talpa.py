@@ -26,12 +26,22 @@ if __name__ == '__main__':
 
     # Main Body section
     if acft.getString('type') == 'jet':
+        print( 'ICAO = {}\nQNH {} hPa TEMP {} degC'.format(apt.id, qnh_hPa, T_degC) )
+        # TAKEOFF
         result = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
         print( result )
+
+        # CLIMB
         RTOW = FAA.FAR25.performance.climb(acft, apt, rwy, qnh_hPa, T_degC)
         print('f    RTOW     FLAG')
         for f in sorted( RTOW.keys() ):
             print( '{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag) )
+
+        # LAND
+        RTOW = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC)
+        print('f    RTOW     FLAG')
+        for f in sorted(RTOW.keys()):
+            print('{:2d} {:6.0f} lb {}'.format(f, RTOW[f].W, RTOW[f].flag))
     elif acft.getString('type') == 'turboprop':
         pass
     elif acft.getString('type') == 'propeller':
@@ -40,22 +50,3 @@ if __name__ == '__main__':
 
 
 
-    # airports.database.buildDatabase()
-    # apt, rwys = airports.extractAirportData('KBOS')
-    #
-    # print(apt)
-    # for r in rwys:
-    #     # print(r.length_ft)
-    #     r_length = { 'TORA': r.length_ft, 'TODA': r.length_ft, 'ASDA': r.length_ft,
-    #                  'LDA': r.length_ft, 'sigma': 1.0 }
-    #     #RTOW = takeoffFAR23(r_length)
-    #     RTOW = 0
-    #     print( 'RWY {} RTOW {} (lb)'.format(r.id, RTOW) )
-    #
-    # # if FAR23:
-    # #    RTOW = takeoffFAR23(apt)
-    # #     print('RTOW (lb)',RTOW)
-    #
-    #
-    #
-    # #print( isa.pressure(1000) )

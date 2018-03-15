@@ -67,12 +67,12 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
     # Starting check on different climb OEI
     # print( 'CLIMB PERFORMANCE' )
     # print( 'Conditions: QNH= {:4.0f} hPa TEMP= {:2.1f} degC\n'.format(qnh_hPa, T_degC) )
-    # FAR25.111 OEI
+
+    # FAR25.111 (OEI)
     # initial climb
     # print(' INITIAL CLIMB ')
     flag = 'INITIAL'
     initial_ramp_angle = {2: 0.012, 3: 0.015, 4: 0.017}
-    W = MTOM
     gear = 0
     for f in to_flap:
         CLmax = acft.CLmax(f)
@@ -86,16 +86,17 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
         # print( 'f {} RTOW {:6.0f} lb'.format(f,acft.checkWeight(RTOW)) )
 
     # climb trasition
+    # FAR25.121 (OEI)
     # print(' CLIMB TRANSITION ')
-    climb_transition_angle = {2: 1e-6, 3: 0.003, 4: 0.005}
+    climb_transition_angle = {2: 0, 3: 0.003, 4: 0.005}
     gear = 1
     flag = 'TRANSITION'
     for f in to_flap:
         CLmax = acft.CLmax(f)
-        CLTO = CLmax/(1.2*1.2) # @ V2 = 1.2VS1g
+        CLTO = CLmax/(1.1*1.1) # @ VLOF = 1.1VS1g
         CD = acft.CD(CLTO,f,gear)
         E = CLTO/CD
-        coeff = neng/(neng-1.0)*( 1./E + initial_ramp_angle[neng] )
+        coeff = neng/(neng-1.0)*( 1./E + climb_transition_angle[neng] )
         RTOW = acft.Thrust(delta)/coeff
         if RTOW < result[f].W:
             result[f] = Data(acft.checkWeight(RTOW), flag)
@@ -112,7 +113,7 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
         CLTO = CLmax/(1.2*1.2) # @ V2 = 1.2VS1g
         CD = acft.CD(CLTO,f,gear)
         E = CLTO/CD
-        coeff = neng/(neng-1.0)*( 1./E + initial_ramp_angle[neng] )
+        coeff = neng/(neng-1.0)*( 1./E + second_climb_segment_angle[neng] )
         RTOW = acft.Thrust(delta)/coeff
         if RTOW < result[f].W:
             result[f] = Data(acft.checkWeight(RTOW), flag)
@@ -128,7 +129,7 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
     CLTO = CLmax/(1.25*1.25) # @ 1.25*VS1g
     CD = acft.CD(CLTO,f,gear)
     E = CLTO/CD
-    coeff = neng/(neng-1.0)*( 1./E + initial_ramp_angle[neng] )
+    coeff = neng/(neng-1.0)*( 1./E + enroute_climb_angle[neng] )
     RTOW = acft.Thrust(delta)/coeff
     if RTOW < result[f].W:
         result[f] = Data(acft.checkWeight(RTOW), flag)
@@ -137,5 +138,49 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
 
     return result
 
-def landing():
-    pass
+def landing(acft, apt, rwy, qnh_hPa, T_degC):
+    # Preparing dictionary with RTOW for different configurations
+    result = {}
+    Data = namedtuple('Data', 'W flag')
+    land_flap = acft.landingFlaps()
+    for f in land_flap:
+        result[f] = Data(W=1.0e8, flag='None')
+
+    # Retrieving main aircraft data
+    MTOM = acft.getValue('MTOM')
+    DOW = acft.getValue('DOM')
+    delta = qnh_hPa / 1013.15
+    sigma = isa.sigma(qnh_hPa * 100, T_degC + 273.15)
+    rho = sigma * isa.constants.rhoSLUK
+    neng = acft.getValue('number_of_engines')
+    S = acft.getValue('S')
+
+    # FAR25.119 (AEO)
+    flag = 'BALKED LANDING AEO'
+    initial_ramp_angle = {2: 0.032, 3: 0.032, 4: 0.032}
+    gear = 1
+    for f in land_flap:
+        CLmax = acft.CLmax(f)
+        CLLND = CLmax / (1.3 * 1.3)  # @ Vapp = 1.3VS1g
+        CD = acft.CD(CLLND, f, gear)
+        E = CLLND / CD
+        coeff = (1. / E + initial_ramp_angle[neng])
+        RTOW = acft.Thrust(delta) / coeff
+        if RTOW < result[f].W:
+            result[f] = Data(acft.checkLandingWeight(RTOW), flag)
+
+    # FAR25.121 (OEI)
+    flag = 'BALKED LANDING OEI'
+    initial_ramp_angle = {2: 0.021, 3: 0.024, 4: 0.027}
+    gear = 1
+    for f in land_flap:
+        CLmax = acft.CLmax(f)
+        CLLND = CLmax / (1.65 * 1.65)  # @ Vapp = 1.65VS1g
+        CD = acft.CD(CLLND, f, gear)
+        E = CLLND / CD
+        coeff = neng / (neng - 1.0) * (1. / E + initial_ramp_angle[neng])
+        RTOW = acft.Thrust(delta) / coeff
+        if RTOW < result[f].W:
+            result[f] = Data(acft.checkWeight(RTOW), flag)
+
+    return result

@@ -3,70 +3,55 @@
 # and landing given runways length (TORA, TODA, ASDA, LDA)
 # and aircraft main characteristics.
 
-from math import sqrt 
-import aircraft_data
-import airports
+
+import aircraft
+import airports.database
 import isa
-
-FAR23 = True
-FAR25 = False
-
-# airport = { 'TORA': 500, 'TODA': 2700, 'ASDA': 2500, 'LDA': 2500,\
-#            'sigma': 1.0 }
-
-
-def findTOP23(sTOG):
-    a = 0.009
-    b = 4.9
-    c = -sTOG
-    delta = b*b - 4*a*c
-    if delta<0:
-        print('delta is negative')            
-    TOP23 = (-b + sqrt(delta))/(2*a)
-    # print(TOP23)
-    return TOP23
-
-
-def landingFAR23(airport):
-    sL = airport['LDA']
-    
-
-def takeoffFAR23(airport):
-    # TORA is limiting.
-    sTO = airport['TORA']
-    sTOG = sTO/1.66
-    TOP23 = findTOP23(sTOG)
-    RTOW = sqrt(TOP23*aircraft_data.S*aircraft_data.P*aircraft_data.CLmaxTO)
-    print('TORA',RTOW)
-    if airport['TODA'] > airport['TORA']:
-        # TODA is limiting
-        sTO = airport['TODA']
-        sTOG = sTO/1.66
-        # print(sTOG)
-        if sTOG <= airport['TORA']:
-            TOP23 = findTOP23(sTOG)
-            RTOW = sqrt(TOP23*aircraft_data.S*aircraft_data.P*aircraft_data.CLmaxTO)
-            print('TODA',RTOW)
-
-    return RTOW
+import FAA.FAR25.performance
 
 if __name__ == '__main__':
-    airports.database.buildDatabase()
-    apt, rwys = airports.extractAirportData('KBOS')
+    import menu.main
+    debug = True
 
-    print(apt)
-    for r in rwys:
-        # print(r.length_ft)
-        r_length = { 'TORA': r.length_ft, 'TODA': r.length_ft, 'ASDA': r.length_ft,
-                     'LDA': r.length_ft, 'sigma': 1.0 }
-        #RTOW = takeoffFAR23(r_length)
-        RTOW = 0
-        print( 'RWY {} RTOW {} (lb)'.format(r.id, RTOW) )
-    
-    # if FAR23:
-    #    RTOW = takeoffFAR23(apt)
-    #     print('RTOW (lb)',RTOW)
-    
+    if debug:
+        apt = airports.database.airport(id='LIPE', altitude=123.0, magvar=1.5)
+        rwy = [airports.database.runway(id='12', hgd_t=116.75, length_ft=9179.0, type='Asphalt'),
+               airports.database.runway(id='30', hgd_t=296.75, length_ft=9179.0, type='Asphalt')]
+        qnh_hPa = 1013.15
+        T_degC = 15.0
+        acft = aircraft.Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
+
+        acft.print()
+
+    else:
+        acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
+
+    # Main Body section
+    if acft.getString('certification') == 'FAR25':
+        print( 'ICAO = {}\nQNH {} hPa TEMP {} degC\n'.format(apt.id, qnh_hPa, T_degC) )
+        # TAKEOFF
+        result = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
+        print( result )
+
+        # CLIMB
+        print( ' \\* CLIMB PERFORMANCE ANALYSIS *\\ \n' )
+        RTOW = FAA.FAR25.performance.climb(acft, apt, rwy, qnh_hPa, T_degC)
+        print('f    RTOW     FLAG')
+        print('------------------')
+        for f in sorted( RTOW.keys() ):
+            print( '{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag) )
+
+        # LAND
+        print('\n \\* LANDING PERFORMANCE ANALYSIS *\\ \n')
+        RTOW = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC)
+        print('f    RTOW     FLAG')
+        print('------------------')
+        for f in sorted(RTOW.keys()):
+            print('{:2d} {:6.0f} lb {}'.format(f, RTOW[f].W, RTOW[f].flag))
+    elif acft.getString('certification') == 'FAR23':
+        pass
 
 
-    #print( isa.pressure(1000) )
+
+
+

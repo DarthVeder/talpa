@@ -18,4 +18,19 @@ def density(h_m):
     return sigma*rhoSL
 
     
-    
+def sigma(p_Pa, T_K):
+    """
+    Sigma [1] returns density/densitySL from equation of state.
+    In : p [P]a, T [K]
+    Out : sigma [1]
+    """
+    rho_SI = p_Pa / (Rair*T_K)
+
+    return rho_SI/rhoSL
+
+def density(delta, teta, unit):
+    sigma = delta/teta
+    if unit == 'kg/m^3':
+        return sigma*rhoSL
+    elif unit == 'slug/ft^3':
+        return sigma*rhoSLUK

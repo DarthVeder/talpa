@@ -10,5 +10,6 @@ __all__ = ['pressure', 'density', 'temperature', 'asound']
 from .pressure import pressure
 from .temperature import temperature
 from .density import density
+from .density import sigma
 from .asound import asound
 

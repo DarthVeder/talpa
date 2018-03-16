@@ -1,3 +1,3 @@
-from .database import setupDatabase, extractAirportData
+from .database import buildDatabase, extractAirportData
 
-#__all__ = ['setupDatabase', 'extractAirportData']
+__all__ = ['setupDatabase', 'extractAirportData']

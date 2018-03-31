@@ -3,7 +3,6 @@
 # and landing given runways length (TORA, TODA, ASDA, LDA)
 # and aircraft main characteristics.
 
-
 import aircraft
 import airports.database
 import isa

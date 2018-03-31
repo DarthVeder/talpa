@@ -1,6 +1,7 @@
-from math import pi, pow
+from math import pi, pow, ceil, sqrt
 import configparser
 import re
+import isa
 
 class Aircraft:
     def __init__(self, config):
@@ -15,6 +16,28 @@ class Aircraft:
         acft = cls(config[acft_id])
         return acft
 
+    def aircraftClass(self):
+        '''Set the class (A,B;C;D) of the aicraft'''
+        S = self.getValue('S')
+        MLM = self.getValue('MLM')
+        f_deg = self.landingFlaps()[-1]
+        CLLnd = self.CLmax(f_deg)
+        rho = isa.densityh(0,'slug/ft^3')
+        kVat = ceil( 1.3 * 0.592484 * sqrt( (2*MLM/S) / (CLLnd*rho) ) )
+        acft_class = 'Not set'
+        if kVat<91:
+            acft_class = 'A'
+        elif kVat>=91 and kVat<=120:
+            acft_class = 'B'
+        elif kVat>=121 and kVat<=140:
+            acft_class = 'C'
+        elif kVat>=141 and kVat<=165:
+            acft_class = 'D'
+        elif kVat>=166:
+            acft_class = 'E'
+
+        self.config['class'] = acft_class
+
     def getValue(self, svalue):
         '''Returns an aircraft float value from a string variable'''
         return float( self.config[svalue] )
@@ -23,22 +46,21 @@ class Aircraft:
         '''Returns an aircraft string data from a string variable'''
         return self.config[sstring].strip('"\'')
 
-
-    # def selectAircraft(self):
-    #     self._finalizeData()
-
     def _finalizeData(self):
         b = self.getValue('b')
         S = self.getValue('S')
-        self.AR = (b * b) / S
+        self.config['AR'] = str( (b * b) / S )
+        self.aircraftClass()
+        self.print()
 
     def print(self):
-        print('Aircraft data:')
+        print('/** AIRCRAFT DATA **/')
         for k in self.config.keys():
             print( '{}={}'.format(k,self.config[k]) )
 
         print( 'Takeoff Flaps setting(s) {}'.format([x for x in self.takeoffFlaps() ]) )
         print( 'Landing Flaps setting(s) {}'.format([x for x in self.landingFlaps() ]) )
+        print('/** DONE **/')
 
     def Thrust(self, delta, derate=0.0):
         return (1.0-derate/100.0) *self.getValue('Tse') * self.getValue('number_of_engines')
@@ -86,9 +108,10 @@ class Aircraft:
 
     def CD(self, CL, f_deg, gear, ige=0):
         CD0 = self.getValue('CD0')
+        AR = self.getValue('AR')
         CDflaps = self.getValue('dCDdf') * (f_deg/180.0*pi)
         CDgear = self.getValue('dCDgear') * gear
-        k = 1 / (pi*self.AR*self.getValue('e'))
+        k = 1 / (pi*AR*self.getValue('e'))
         if ige == 1:
             # Rymer formula 12.61 pag 304 for h/b = 1/2
             k = k * 33.0 * pow(0.5,1.5) / ( 1 + 33*pow(0.5,1.5) )

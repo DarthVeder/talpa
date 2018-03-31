@@ -3,7 +3,7 @@
 # and landing given runways length (TORA, TODA, ASDA, LDA)
 # and aircraft main characteristics.
 
-import aircraft
+from aircraft import Aircraft
 import airports.database
 import isa
 import FAA.FAR25.performance
@@ -18,9 +18,9 @@ if __name__ == '__main__':
                airports.database.runway(id='30', hgd_t=296.75, length_ft=9179.0, type='Asphalt')]
         qnh_hPa = 1013.15
         T_degC = 15.0
-        acft = aircraft.Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
+        acft = Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
 
-        acft.print()
+        # acft.print()
 
     else:
         acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()

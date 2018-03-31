@@ -175,7 +175,7 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC):
     gear = 1
     for f in land_flap:
         CLmax = acft.CLmax(f)
-        CLLND = CLmax / (1.3 * 1.3)  # @ Vapp = 1.3VS1g
+        CLLND = CLmax / (1.5 * 1.5)  # @ Vapp = 1.5VS1g
         CD = acft.CD(CLLND, f, gear)
         E = CLLND / CD
         coeff = neng / (neng - 1.0) * (1. / E + initial_ramp_angle[neng])

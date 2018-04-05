@@ -24,7 +24,7 @@ def takeoff(acft, apt, rwy, qnh_hPa, T_degC):
 
     result = ' \\* TAKEOFF PERFORMANCE ANALYSIS *\\ \n'
     for f in to_flap:
-        CLmaxTO =  1.2 #acft.getValue('CLmaxTO')
+        CLmaxTO =  acft.CLmax(f)
         S = acft.getValue('S')
         delta = qnh_hPa / 1013.15
         T = acft.Thrust(delta)
@@ -134,6 +134,21 @@ def climb(acft, apt, rwy, qnh_hPa, T_degC):
     if RTOW < result[f].W:
         result[f] = Data(acft.checkWeight(RTOW), flag)
 
+    # SID 3.3% OEI climb gradient
+    sid_climb_angle = {2: 0.033, 3: 0.033, 4: 0.033}
+    gear = 0
+    f = 0
+    flag = 'SID'
+    for f in to_flap:
+        CLmax = acft.CLmax(f)
+        CLTO = CLmax/(1.2*1.2) # @ V2 = 1.2VS1g
+        CD = acft.CD(CLTO,f,gear)
+        E = CLTO/CD
+        coeff = neng/(neng-1.0)*( 1./E + second_climb_segment_angle[neng] )
+        RTOW = acft.Thrust(delta)/coeff
+        if RTOW < result[f].W:
+            result[f] = Data(acft.checkWeight(RTOW), flag)
+
     # print( 'f {} RTOW {:6.0f} lb'.format(f, acft.checkWeight(RTOW)) )
 
     return result
@@ -182,5 +197,21 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC):
         RTOW = acft.Thrust(delta) / coeff
         if RTOW < result[f].W:
             result[f] = Data(acft.checkWeight(RTOW), flag)
+
+    # MISSED APPROACH IFR GRADIENT (OEI)
+    flag = 'IFR MISSED APPROACH AEO'
+    initial_ramp_angle = {2: 0.025, 3: 0.025, 4: 0.025}
+    gear = 1
+    for f in land_flap:
+        CLmax = acft.CLmax(f)
+        CLLND = CLmax / (1.3 * 1.3)  # @ Vapp = 1.3VS1g
+        CD = acft.CD(CLLND, f, gear)
+        E = CLLND / CD
+        coeff = (1. / E + initial_ramp_angle[neng])
+        RTOW = acft.Thrust(delta) / coeff
+        #print(f, RTOW)
+        if RTOW < result[f].W:
+            result[f] = Data(acft.checkLandingWeight(RTOW), flag)
+
 
     return result

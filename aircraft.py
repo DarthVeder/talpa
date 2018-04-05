@@ -109,9 +109,10 @@ class Aircraft:
     def CD(self, CL, f_deg, gear, ige=0):
         CD0 = self.getValue('CD0')
         AR = self.getValue('AR')
+        e = self.getValue('e')
         CDflaps = self.getValue('dCDdf') * (f_deg/180.0*pi)
         CDgear = self.getValue('dCDgear') * gear
-        k = 1 / (pi*AR*self.getValue('e'))
+        k = 1 / (pi*AR*e)
         if ige == 1:
             # Rymer formula 12.61 pag 304 for h/b = 1/2
             k = k * 33.0 * pow(0.5,1.5) / ( 1 + 33*pow(0.5,1.5) )

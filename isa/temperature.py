@@ -12,7 +12,7 @@ def temperature(h_m):
     _T = TSL
     if h_m <= hBL1_m:
         _T = (1.0 - 6.8755856e-6*h_ft) * TSL
-    elif h_m<= hBL2_m:
+    elif h_m <= hBL2_m:
         _T = 216.65
 
     return _T

@@ -6,11 +6,13 @@
 from aircraft import Aircraft
 import airports.database
 import isa
+import inout.fsbuild.read as fsb
 import FAA.FAR25.performance
 
 if __name__ == '__main__':
     import menu.main
     debug = True
+    read_ofp = True
 
     if debug:
         apt = airports.database.airport(id='LIPE', altitude=123.0, magvar=1.5)
@@ -21,27 +23,35 @@ if __name__ == '__main__':
         acft = Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
 
         # acft.print()
+        if read_ofp:
+            # Reading OFP
+            file_in = r'C:\home\talpa\fsbroute.log'
+            ofp_data, ofp_text = fsb.read(file_in)
+            fsb.printOFPData()
+            airports.database.buildDatabase()
+            apt, rwy = airports.database.extractAirportData(ofp_data['DEP'])
 
     else:
         acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
 
     # Main Body section
     if acft.getString('certification') == 'FAR25':
-        print( 'ICAO = {}\nQNH {} hPa TEMP {} degC\n'.format(apt.id, qnh_hPa, T_degC) )
+        print('//* TAKEOFF PERFORMANCE ANALYSIS *//')
+        print('ICAO = {}\nQNH {} hPa TEMP {} degC\n'.format(apt.id, qnh_hPa, T_degC))
         # TAKEOFF
         result = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
-        print( result )
+        print(result)
 
         # CLIMB
-        print( ' \\* CLIMB PERFORMANCE ANALYSIS *\\ \n' )
-        RTOW = FAA.FAR25.performance.climb(acft, apt, rwy, qnh_hPa, T_degC)
+        print(' //* CLIMB PERFORMANCE ANALYSIS *// \n')
+        RTOW = FAA.FAR25.performance.climb(acft, qnh_hPa, T_degC)
         print('f    RTOW     FLAG')
         print('------------------')
-        for f in sorted( RTOW.keys() ):
-            print( '{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag) )
+        for f in sorted(RTOW.keys()):
+            print('{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag))
 
         # LAND
-        print('\n \\* LANDING PERFORMANCE ANALYSIS *\\ \n')
+        print('\n //* LANDING PERFORMANCE ANALYSIS *// \n')
         RTOW = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC)
         print('f    RTOW     FLAG')
         print('------------------')

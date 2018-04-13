@@ -8,6 +8,7 @@ from math import sqrt
 from .constants import *
 from .temperature import temperature
 
+
 def asound(h_m):
     """
     Speed of sound (m/s) up to 25 km (82021 ft).
@@ -16,8 +17,6 @@ def asound(h_m):
     """
 
     _T = temperature(h_m)
-    _asound = sqrt(GAMMA*Rair*_T)
+    _asound = sqrt(GAMMA * Rair * _T)
 
     return _asound
-
-    

@@ -3,6 +3,7 @@ import configparser
 import re
 import isa
 
+
 class Aircraft:
     def __init__(self, config):
         self.config = config
@@ -22,25 +23,25 @@ class Aircraft:
         MLM = self.getValue('MLM')
         f_deg = self.landingFlaps()[-1]
         CLLnd = self.CLmax(f_deg)
-        rho = isa.densityh(0,'slug/ft^3')
-        kVat = ceil( 1.3 * 0.592484 * sqrt( (2*MLM/S) / (CLLnd*rho) ) )
+        rho = isa.densityh(0, 'slug/ft^3')
+        kVat = ceil(1.3 * 0.592484 * sqrt((2 * MLM / S) / (CLLnd * rho)))
         acft_class = 'Not set'
-        if kVat<91:
+        if kVat < 91:
             acft_class = 'A'
-        elif kVat>=91 and kVat<=120:
+        elif 91 <= kVat <= 120:
             acft_class = 'B'
-        elif kVat>=121 and kVat<=140:
+        elif kVat >= 121 and kVat <= 140:
             acft_class = 'C'
-        elif kVat>=141 and kVat<=165:
+        elif 141 <= kVat <= 165:
             acft_class = 'D'
-        elif kVat>=166:
+        elif kVat >= 166:
             acft_class = 'E'
 
         self.config['class'] = acft_class
 
     def getValue(self, svalue):
         '''Returns an aircraft float value from a string variable'''
-        return float( self.config[svalue] )
+        return float(self.config[svalue])
 
     def getString(self, sstring):
         '''Returns an aircraft string data from a string variable'''
@@ -49,21 +50,21 @@ class Aircraft:
     def _finalizeData(self):
         b = self.getValue('b')
         S = self.getValue('S')
-        self.config['AR'] = str( (b * b) / S )
+        self.config['AR'] = str((b * b) / S)
         self.aircraftClass()
         self.print()
 
     def print(self):
         print('/** AIRCRAFT DATA **/')
         for k in self.config.keys():
-            print( '{}={}'.format(k,self.config[k]) )
+            print('{}={}'.format(k, self.config[k]))
 
-        print( 'Takeoff Flaps setting(s) {}'.format([x for x in self.takeoffFlaps() ]) )
-        print( 'Landing Flaps setting(s) {}'.format([x for x in self.landingFlaps() ]) )
+        print('Takeoff Flaps setting(s) {}'.format([x for x in self.takeoffFlaps()]))
+        print('Landing Flaps setting(s) {}'.format([x for x in self.landingFlaps()]))
         print('/** DONE **/')
 
     def Thrust(self, delta, derate=0.0):
-        return (1.0-derate/100.0) *self.getValue('Tse') * self.getValue('number_of_engines')
+        return (1.0 - derate / 100.0) * self.getValue('Tse') * self.getValue('number_of_engines')
 
     def Power(self, delta):
         return self.getValue('Pse') * self.getValue('number_of_engines')
@@ -75,8 +76,8 @@ class Aircraft:
 
         for f in sflaps:
             if 'T' in f:
-                m = re.search(regex,f)
-                to_flap.append( int(f[m.start():m.end()]) )
+                m = re.search(regex, f)
+                to_flap.append(int(f[m.start():m.end()]))
 
         if len(to_flap) == 0:
             print('Aircraft is missing at least one takeoff flap setting (T)')
@@ -102,7 +103,7 @@ class Aircraft:
 
     def CLmax(self, f_deg):
         dCLdf = self.getValue('dCLdf')
-        CLmax = self.getValue('CLmax') + dCLdf * (f_deg/180.0*pi)
+        CLmax = self.getValue('CLmax') + dCLdf * (f_deg / 180.0 * pi)
 
         return CLmax
 
@@ -110,14 +111,14 @@ class Aircraft:
         CD0 = self.getValue('CD0')
         AR = self.getValue('AR')
         e = self.getValue('e')
-        CDflaps = self.getValue('dCDdf') * (f_deg/180.0*pi)
+        CDflaps = self.getValue('dCDdf') * (f_deg / 180.0 * pi)
         CDgear = self.getValue('dCDgear') * gear
-        k = 1 / (pi*AR*e)
+        k = 1 / (pi * AR * e)
         if ige == 1:
             # Rymer formula 12.61 pag 304 for h/b = 1/2
-            k = k * 33.0 * pow(0.5,1.5) / ( 1 + 33*pow(0.5,1.5) )
+            k = k * 33.0 * pow(0.5, 1.5) / (1 + 33 * pow(0.5, 1.5))
 
-        return CD0+CDflaps+CDgear+k*CL*CL
+        return CD0 + CDflaps + CDgear + k * CL * CL
 
     def checkWeight(self, W):
         MTOM = self.getValue('MTOM')

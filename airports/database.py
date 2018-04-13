@@ -14,6 +14,7 @@ widgets = [' [', progressbar.Timer(), '] ',
 
 conn = None
 
+
 def findFSXpath():
     '''Find FSX path in registry'''
     import winreg
@@ -36,7 +37,7 @@ def parseXMLfile(xml_file):
     # apt[1]: list[namedtuple runway]
     apt = []
 
-    print( 'Parsing "{}"'.format(xml_file) )
+    print('Parsing "{}"'.format(xml_file))
     bar = progressbar.ProgressBar(widgets=widgets,
                                   max_value=len(apt_list))
     i = 0
@@ -70,7 +71,7 @@ def buildDatabase(force_rebuild=False):
     if os.path.isfile(xml_file):
         apt = parseXMLfile(xml_file)
     else:
-        print( '"{}" does not exist. Stopping. Run MakeRunways.exe'.format(xml_file) )
+        print('"{}" does not exist. Stopping. Run MakeRunways.exe'.format(xml_file))
         exit(1)
 
     global conn
@@ -84,16 +85,16 @@ def buildDatabase(force_rebuild=False):
     is_new = False
 
     if os.path.isfile(sql_file):
-        print( 'Found "{}"'.format(sql_file) )
+        print('Found "{}"'.format(sql_file))
     else:
-        print( '"{}" not found. Rebuilding Airports database'.format(sql_file) )
+        print('"{}" not found. Rebuilding Airports database'.format(sql_file))
         is_new = True
 
     # Forcing DB rebuild
     if force_rebuild:
         is_new = True
 
-    conn = sqlite3.connect( os.path.abspath(sql_file) )
+    conn = sqlite3.connect(os.path.abspath(sql_file))
 
     if is_new:
         n_commands = 4
@@ -101,10 +102,10 @@ def buildDatabase(force_rebuild=False):
         sql[0] = '''drop table if exists FSXairport;'''
         sql[1] = '''drop table if exists FSXrunway;'''
         sql[2] = ('''create table FSXairport (icao char(4), altitude float, '''
-                 '''magvar float);''')
+                  '''magvar float);''')
         sql[3] = ('''create table FSXrunway (id text(3), hdg_t float, '''
-                 '''length_ft float, surface_type text, airportID integer, '''
-                 '''foreign key (airportID) references FSXairport(rowid));''')
+                  '''length_ft float, surface_type text, airportID integer, '''
+                  '''foreign key (airportID) references FSXairport(rowid));''')
         for i in range(n_commands):
             conn.execute(sql[i])
         conn.commit()
@@ -133,10 +134,10 @@ def insertDatabaseData(conn, apt):
         # Inserting the airport..
         cmd = 'insert into FSXairport values ' + str(tuple(data)) + ';'
         c.execute(cmd)
-        last_id = c.lastrowid        
+        last_id = c.lastrowid
         # and its runways. The airportid comes from c.lastrowid
         for r in rwys:
-            cmd = 'insert into FSXrunway values ' + str(tuple(r)+(last_id,)) + ';'
+            cmd = 'insert into FSXrunway values ' + str(tuple(r) + (last_id,)) + ';'
             c.execute(cmd)
     bar.finish()
 
@@ -145,34 +146,36 @@ def insertDatabaseData(conn, apt):
 
 def extractAirportData(icao):
     ''' Usage:
-        apt, rwys = extractAirportData('KBOS')
+        apt, rwys = airports.database.extractAirportData('KBOS')
 
         apt is an airport structure ('airport', 'id altitude magvar')
         rwys is a list of runway structure ('runway', 'id hgd_t length_ft type')
 
-        NB. Airport icao MUST be capitalzed.
+        NB. Airport icao MUST be capitalized.
+        NB. Before extracting data, build the db:
+            airports.database.buildDatabase()
     '''
     global conn
     c = conn.cursor()
     cmd = '''select * from FSXairport where icao=?'''
-    c.execute(cmd, (icao, ))
+    c.execute(cmd, (icao,))
     try:
         apt_data = c.fetchone()
-    
+
         cmd = '''select rowid from FSXairport where icao=?'''
-        c.execute(cmd, (icao, ))
+        c.execute(cmd, (icao,))
         airportid = c.fetchone()[0]
 
         apt_rwy = []
         cmd = '''select * from FSXrunway where airportid=?'''
-        for r in c.execute(cmd, (airportid, )):
+        for r in c.execute(cmd, (airportid,)):
             apt_rwy.append(r[:-1])
     except TypeError:
-        print( 'Airport {} not found'.format(icao) )
+        print('Airport {} not found'.format(icao))
         exit(1)
 
-    return (airport(*apt_data), [runway(*r) for r in apt_rwy])
-    
+    return airport(*apt_data), [runway(*r) for r in apt_rwy]
+
 
 if __name__ == '__main__':
     ''' Testing the code '''
@@ -184,4 +187,3 @@ if __name__ == '__main__':
         print(r)
 
     conn.close()
-

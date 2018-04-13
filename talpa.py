@@ -5,7 +5,6 @@
 
 from aircraft import Aircraft
 import airports.database
-import isa
 import inout.fsbuild.read as fsb
 import FAA.FAR25.performance
 

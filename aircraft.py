@@ -18,7 +18,7 @@ class Aircraft:
         return acft
 
     def aircraftClass(self):
-        '''Set the class (A,B;C;D) of the aicraft'''
+        """Set the class (A;B;C;D) of the aircraft"""
         S = self.getValue('S')
         MLM = self.getValue('MLM')
         f_deg = self.landingFlaps()[-1]
@@ -40,11 +40,11 @@ class Aircraft:
         self.config['class'] = acft_class
 
     def getValue(self, svalue):
-        '''Returns an aircraft float value from a string variable'''
+        """Returns an aircraft float value from a string variable"""
         return float(self.config[svalue])
 
     def getString(self, sstring):
-        '''Returns an aircraft string data from a string variable'''
+        """Returns an aircraft string data from a string variable"""
         return self.config[sstring].strip('"\'')
 
     def _finalizeData(self):

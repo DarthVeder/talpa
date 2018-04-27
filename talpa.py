@@ -1,12 +1,16 @@
-# Ta.L.P.A. is a TAkeoff and Landing Performance Analyzer
-# It allows to find maximum regulated weight for takeoff
-# and landing given runways length (TORA, TODA, ASDA, LDA)
-# and aircraft main characteristics.
+"""
+Ta.L.P.A. is a TAkeoff and Landing Performance Analyzer
+It allows to find maximum regulated weights for takeoff
+and landing given runways length (TORA, TODA, ASDA, LDA);
+aircraft main characteristics and weather.
+"""
 
 from aircraft import Aircraft
 import airports.database
 import inout.fsbuild.read as fsb
 import FAA.FAR25.performance
+
+unit = 'lb'
 
 if __name__ == '__main__':
     import menu.main
@@ -38,24 +42,27 @@ if __name__ == '__main__':
         print('//* TAKEOFF PERFORMANCE ANALYSIS *//')
         print('ICAO = {}\nQNH {} hPa TEMP {} degC\n'.format(apt.id, qnh_hPa, T_degC))
         # TAKEOFF
-        result = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC)
-        print(result)
+        print(' //* TAKEOFF ANALYSIS *// \n')
+        RTOW = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit)
+        print('rwyID  flap  RTOW ({})'.format(unit))
+        for f in sorted(RTOW.keys()):
+            print('{:2d} {:2s} {:6.0f}'.format(f,RTOW[f].rwyID,RTOW[f].W))
 
         # CLIMB
         print(' //* CLIMB PERFORMANCE ANALYSIS *// \n')
-        RTOW = FAA.FAR25.performance.climb(acft, qnh_hPa, T_degC)
-        print('f    RTOW     FLAG')
-        print('------------------')
+        RTOW = FAA.FAR25.performance.climb(acft, qnh_hPa, T_degC, unit)
+        print('f    RTOW ({}) FLAG'.format(unit))
+        print('----------------------')
         for f in sorted(RTOW.keys()):
-            print('{:2d} {:6.0f} lb {}'.format(f,RTOW[f].W, RTOW[f].flag))
+            print('{:2d} {:6.0f} {}'.format(f,RTOW[f].W, RTOW[f].flag))
 
         # LAND
         print('\n //* LANDING PERFORMANCE ANALYSIS *// \n')
-        RTOW = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC)
-        print('f    RTOW     FLAG')
-        print('------------------')
+        RTOW = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC, unit)
+        print('f    RTOW ({})     FLAG'.format(unit))
+        print('----------------------')
         for f in sorted(RTOW.keys()):
-            print('{:2d} {:6.0f} lb {}'.format(f, RTOW[f].W, RTOW[f].flag))
+            print('{:2d} {:6.0f} {}'.format(f, RTOW[f].W, RTOW[f].flag))
     elif acft.getString('certification') == 'FAR23':
         pass
 

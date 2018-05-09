@@ -2,10 +2,14 @@ from math import pi, pow, ceil, sqrt
 import configparser
 import re
 import isa
+import logging
 
+module_logger = logging.getLogger('talpa.aircraft')
 
 class Aircraft:
     def __init__(self, config):
+        self.logger = logging.getLogger('talpa'+'.clsAircraft')
+        self.logger.info('creating an instance of Auxiliary')
         self.config = config
         self._finalizeData()
 
@@ -48,6 +52,7 @@ class Aircraft:
         return self.config[sstring].strip('"\'')
 
     def _finalizeData(self):
+        self.logger.debug('Finalizing data')
         b = self.getValue('b')
         S = self.getValue('S')
         self.config['AR'] = str((b * b) / S)
@@ -70,6 +75,7 @@ class Aircraft:
         return self.getValue('Pse') * self.getValue('number_of_engines')
 
     def takeoffFlaps(self):
+        self.logger.debug('Finding takeoff flaps setting(s)')
         sflaps = self.getString('flaps').split(',')
         to_flap = []
         regex = r"\d+"

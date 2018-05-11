@@ -2,13 +2,13 @@ from math import pi, pow, ceil, sqrt
 import configparser
 import re
 import isa
-import logging
+from log import logger
 
-module_logger = logging.getLogger('talpa.aircraft')
+module_logger = logger.getChild('aircraft')
 
 class Aircraft:
     def __init__(self, config):
-        self.logger = logging.getLogger('talpa'+'.clsAircraft')
+        self.logger = logger.getChild('clsAircraft')
         self.logger.info('creating an instance of Auxiliary')
         self.config = config
         self._finalizeData()

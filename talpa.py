@@ -5,24 +5,13 @@ and landing given runways length (TORA, TODA, ASDA, LDA);
 aircraft main characteristics and weather.
 """
 
-import logging
+from log import logger
 from aircraft import Aircraft
 import airports.database
 import inout.fsbuild.read as fsb
 import FAA.FAR25.performance
 
 unit = 'lb'
-logger = logging.getLogger('talpa')
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('talpa.log', mode='w')
-fh.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-logger.addHandler(fh)
-logger.addHandler(ch)
 
 if __name__ == '__main__':
     logger.debug('Building menu')

@@ -1,4 +1,4 @@
-# Takeoff and Landing Perfomance Analyzer
+# Takeoff and Landing Performance Analyzer
 
 Introduction
 ============

@@ -3,9 +3,11 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 14-05-2018
+- FSBUILD import fsbroute.log file
+- Multiple arr/dep analysis
 
-## [1.0.1] - 2018-03-16
+## [1.0.1] - 16-03-2018
 ### Added
 - Configuration aircraft file
 - FAR25 takeoff, landing and climb performances
@@ -13,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Flaps 'TL' keyword 
 
-## [1.0] - 2018-03-16
+## [1.0] - 16-03-2018
 ### Added
 - Configuration aircraft file
 - FAR25 takeoff, landing and climb performances

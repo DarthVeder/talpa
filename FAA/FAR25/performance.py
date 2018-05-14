@@ -1,5 +1,5 @@
 """
-Dimensioning using FAR25 for:
+Aircraft masses estimation using FAR25 for:
 - takeoff distance
 - initial climb
 - landing
@@ -37,16 +37,13 @@ def takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         T = acft.Thrust(delta)
         MTOM = acft.getValue('MTOM')
 
-        #result += '\nFLAPS {}\n'.format(f)
-        #result += ' RWY   RTOW (lb)\n'
-        #result += '---------------\n'
         for r in rwy:
             TORA = r.length_ft
             TOP25 = TORA / 37.5
             RTOW = sqrt(TOP25 * S * sigma * CLmaxTO * T)
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            result[f] = Data(rwyID = r.id, W = RTOW)
+            result[(r.id, f)] = RTOW
 
     return result
 
@@ -57,10 +54,10 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     Data = namedtuple('Data', 'W flag')
     to_flap = acft.takeoffFlaps()
     for f in to_flap:
-        result[f] = Data(W=1.0e8, flag='None')
+        result[f] = Data(W=acft.getValue('MTOM'), flag='NO LIM')
     # Maybe flap 0 is not in takeoff setting, but I need it in enroute climb OEI
     if 0 not in to_flap:
-        result[0] = Data(W=1.0e8, flag='None')
+        result[0] = Data(W=acft.getValue('MTOM'), flag='NO LIM')
 
     # Retrieving main aircraft data
     MTOM = acft.getValue('MTOM')
@@ -70,15 +67,12 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     rho = sigma * isa.constants.rhoSLUK
     neng = acft.getValue('number_of_engines')
     S = acft.getValue('S')
+    flag = 'NO LIM'
 
     # Starting check on different climb OEI
-    # print( 'CLIMB PERFORMANCE' )
-    # print( 'Conditions: QNH= {:4.0f} hPa TEMP= {:2.1f} degC\n'.format(qnh_hPa, T_degC) )
-
     # FAR25.111 (OEI)
     # initial climb
     # print(' INITIAL CLIMB ')
-    flag = 'INITIAL'
     initial_ramp_angle = {2: 0.012, 3: 0.015, 4: 0.017}
     gear = 0
     for f in to_flap:
@@ -91,6 +85,7 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'INITIAL'
             result[f] = Data(RTOW, flag)
         # print( 'f {} RTOW {:6.0f} lb'.format(f,acft.checkWeight(RTOW)) )
 
@@ -99,7 +94,6 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     # print(' CLIMB TRANSITION ')
     climb_transition_angle = {2: 0, 3: 0.003, 4: 0.005}
     gear = 1
-    flag = 'TRANSITION'
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax / (1.1 * 1.1)  # @ VLOF = 1.1VS1g
@@ -110,14 +104,15 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'TRANSITION'
             result[f] = Data(RTOW, flag)
-        # print( 'f {} RTOW {:6.0f} lb'.format(f, acft.checkWeight(RTOW)) )
+
+    # print( 'f {} RTOW {:6.0f} lb'.format(f, acft.checkWeight(RTOW)) )
 
     # second climb segment
     # print(' SECOND CLIMB SEGMENT ')
     second_climb_segment_angle = {2: 0.024, 3: 0.027, 4: 0.03}
     gear = 0
-    flag = 'SECOND'
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax / (1.2 * 1.2)  # @ V2 = 1.2VS1g
@@ -128,6 +123,7 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'SECOND'
             result[f] = Data(RTOW, flag)
         # print( 'f {} RTOW {:6.0f} lb'.format(f, acft.checkWeight(RTOW)) )
 
@@ -136,7 +132,6 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     enroute_climb_angle = {2: 0.012, 3: 0.015, 4: 0.017}
     gear = 0
     f = 0
-    flag = 'ENROUTE'
     CLmax = acft.CLmax(f)
     CLTO = CLmax / (1.25 * 1.25)  # @ 1.25*VS1g
     CD = acft.CD(CLTO, f, gear)
@@ -146,13 +141,13 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     if RTOW < result[f].W:
         RTOW = acft.checkWeight(RTOW)
         RTOW = checkUnit(RTOW, unit)
+        flag = 'ENROUTE'
         result[f] = Data(RTOW, flag)
 
     # SID 3.3% OEI climb gradient
     sid_climb_angle = {2: 0.033, 3: 0.033, 4: 0.033}
     gear = 0
     f = 0
-    flag = 'SID'
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax / (1.2 * 1.2)  # @ V2 = 1.2VS1g
@@ -163,6 +158,7 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = '3.3% SID'
             result[f] = Data(RTOW, flag)
     # print( 'f {} RTOW {:6.0f} lb'.format(f, acft.checkWeight(RTOW)) )
 
@@ -185,9 +181,9 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
     rho = sigma * isa.constants.rhoSLUK
     neng = acft.getValue('number_of_engines')
     S = acft.getValue('S')
+    flag = 'No limits'
 
     # FAR25.119 (AEO)
-    flag = 'BALKED LANDING AEO'
     initial_ramp_angle = {2: 0.032, 3: 0.032, 4: 0.032}
     gear = 1
     for f in land_flap:
@@ -200,10 +196,10 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'BALKED LANDING AEO'
             result[f] = Data(RTOW, flag)
 
     # FAR25.121 (OEI)
-    flag = 'BALKED LANDING OEI'
     initial_ramp_angle = {2: 0.021, 3: 0.024, 4: 0.027}
     gear = 1
     for f in land_flap:
@@ -216,10 +212,10 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'BALKED LANDING OEI'
             result[f] = Data(RTOW, flag)
 
     # MISSED APPROACH IFR GRADIENT (OEI)
-    flag = 'IFR MISSED APPROACH AEO'
     initial_ramp_angle = {2: 0.025, 3: 0.025, 4: 0.025}
     gear = 1
     for f in land_flap:
@@ -229,10 +225,10 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         E = CLLND / CD
         coeff = (1. / E + initial_ramp_angle[neng])
         RTOW = acft.Thrust(delta) / coeff
-        # print(f, RTOW)
         if RTOW < result[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
+            flag = 'IFR MISSED APPROACH AEO'
             result[f] = Data(RTOW, flag)
 
     return result

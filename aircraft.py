@@ -8,21 +8,24 @@ module_logger = logger.getChild('aircraft')
 
 class Aircraft:
     def __init__(self, config):
-        self.logger = logger.getChild('clsAircraft')
-        self.logger.info('creating an instance of Auxiliary')
+        self.logger = logger.getChild('Aircraft')
+        self.logger.info('creating Aircraft')
         self.config = config
         self._finalizeData()
 
     @classmethod
     def readConfiguration(cls, xml_file, acft_id):
+        logger.info('reading Aircraft configuration')
         config = configparser.ConfigParser(inline_comment_prefixes=(';', '#'))
         config.read(xml_file)
 
         acft = cls(config[acft_id])
+        logger.info('done reading Aircraft configuration')
+
         return acft
 
     def aircraftClass(self):
-        """Set the class (A;B;C;D) of the aircraft"""
+        self.logger.info('Set Aicraft class ')
         S = self.getValue('S')
         MLM = self.getValue('MLM')
         f_deg = self.landingFlaps()[-1]
@@ -40,6 +43,7 @@ class Aircraft:
             acft_class = 'D'
         elif kVat >= 166:
             acft_class = 'E'
+        self.logger.debug('class: %s', acft_class)
 
         self.config['class'] = acft_class
 
@@ -60,13 +64,10 @@ class Aircraft:
         self.print()
 
     def print(self):
-        print('/** AIRCRAFT DATA **/')
+        self.logger.info('/** AIRCRAFT DATA **/')
         for k in self.config.keys():
-            print('{}={}'.format(k, self.config[k]))
-
-        print('Takeoff Flaps setting(s) {}'.format([x for x in self.takeoffFlaps()]))
-        print('Landing Flaps setting(s) {}'.format([x for x in self.landingFlaps()]))
-        print('/** DONE **/')
+            self.logger.info('%s = %s', k, self.config[k])
+        self.logger.info('/** DONE **/')
 
     def Thrust(self, delta, derate=0.0):
         return (1.0 - derate / 100.0) * self.getValue('Tse') * self.getValue('number_of_engines')
@@ -75,6 +76,13 @@ class Aircraft:
         return self.getValue('Pse') * self.getValue('number_of_engines')
 
     def takeoffFlaps(self):
+        '''
+        'flaps' keyword in aircrafts.cfg must have a 'T' or an 'L' for takeoff and landing flap setting.
+
+        Example in aircraft.cfg:
+        flaps = 0, 1, 2, 5T, 10T, 15TL, 25L, 30L, 40L
+
+        '''
         self.logger.debug('Finding takeoff flaps setting(s)')
         sflaps = self.getString('flaps').split(',')
         to_flap = []
@@ -86,12 +94,20 @@ class Aircraft:
                 to_flap.append(int(f[m.start():m.end()]))
 
         if len(to_flap) == 0:
-            print('Aircraft is missing at least one takeoff flap setting (T)')
+            self.logger.critical('Aircraft is missing at least one takeoff flap setting (T)')
             exit(1)
+        self.logger.debug('Takeoff flaps: %s', to_flap)
 
         return to_flap
 
     def landingFlaps(self):
+        '''
+        'flaps' keyword in aircrafts.cfg must have a 'T' or an 'L' for takeoff and landing flap setting.
+
+        Example in aircraft.cfg:
+        flaps = 0, 1, 2, 5T, 10T, 15TL, 25L, 30L, 40L
+
+        '''
         sflaps = self.getString('flaps').split(',')
         land_flap = []
         regex = r"\d+"
@@ -104,6 +120,7 @@ class Aircraft:
         if len(land_flap) == 0:
             print('Aircraft is missing at least one landing flap setting (L)')
             exit(1)
+        self.logger.debug('landing flaps: %s', land_flap)
 
         return land_flap
 

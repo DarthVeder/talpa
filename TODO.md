@@ -2,6 +2,7 @@
 
 ## Suggestion for improving the code
 
-- Read FSBUILD flight plan fsbroute.log
-- Correct if necessary RTOMs
-- Reduce payload (?) in case performances are not satisfied
+- Read FSBUILD flight plan fsbroute.log DONE
+- Reduce payload in case performances are not satisfied
+- Add option to print RTOMs in kg or lb
+- Add test cases with unittest

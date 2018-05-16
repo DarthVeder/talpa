@@ -23,18 +23,19 @@ import aircraft
 import airports
 
 AIRCRAFT = 1
-AIRPORT  = 2
-COMPUTE  = 3
-EXIT     = 4
-main_menu = {AIRCRAFT: 'Select Aircraft', AIRPORT: 'Select Airport', \
+AIRPORT = 2
+COMPUTE = 3
+EXIT = 4
+main_menu = {AIRCRAFT: 'Select Aircraft', AIRPORT: 'Select Airport',
              COMPUTE: 'Perform Analysis', EXIT: 'Exit'}
 
 ICAO = 1
 QNH = 2
 TEMP = 3
 BACK = 4
-airport_menu = {ICAO: 'Select ICAO', QNH: 'Set QNH', TEMP: 'Set Temperature', \
+airport_menu = {ICAO: 'Select ICAO', QNH: 'Set QNH', TEMP: 'Set Temperature',
                 BACK: 'Back'}
+
 
 def checkChoice(uchoice):
     '''Checks that the user choice is a number. Returns the choice number'''
@@ -57,7 +58,7 @@ def build():
 
     while in_menu:
         for (key, choice) in main_menu.items():
-            print( '{} {}'.format(key, choice) )
+            print('{} {}'.format(key, choice))
 
         uchoice = input('Choice: ')
         # Processing user choice
@@ -69,12 +70,12 @@ def build():
             airport_is_set = True
         elif uchoice == AIRCRAFT:
             acft_config = aircraftMenu()
-            acft = aircraft.Aircraft( acft_config )
+            acft = aircraft.Aircraft(acft_config)
             acft.print()
             aircraft_is_set = True
         elif uchoice == COMPUTE:
             if airport_is_set and aircraft_is_set:
-                return (acft,apt, rwy, qnh_hPa, T_degC)
+                return acft, apt, rwy, qnh_hPa, T_degC
             else:
                 if not airport_is_set:
                     print('Airport not set')
@@ -94,7 +95,7 @@ def airportMenu():
 
     while in_menu:
         for (key, choice) in airport_menu.items():
-            print( '{} {}'.format(key, choice) )
+            print('{} {}'.format(key, choice))
 
         uchoice = input('Choice: ')
         # Processing user choice
@@ -112,40 +113,40 @@ def airportMenu():
         elif uchoice == BACK:
             in_menu = False
 
-    return (apt, rwy, qnh_hPa, T_degC)
+    return apt, rwy, qnh_hPa, T_degC
 
 
 def aircraftMenu():
-    config = configparser.ConfigParser(inline_comment_prefixes=(';','#'))
+    config = configparser.ConfigParser(inline_comment_prefixes=(';', '#'))
     if 'aircraft' in sys.modules:
-        config.read( os.path.dirname(sys.modules['aircraft'].__file__) + r'\data\aircrafts.cfg' )
+        config.read(os.path.dirname(sys.modules['aircraft'].__file__) + r'\data\aircrafts.cfg')
         print('Read A')
     else:
         config.read(r'..\data\aircrafts.cfg')
 
     in_menu = True
     section = config.sections()
-    nrows = 2 # max number of aircraft in each submenu
+    nrows = 2  # max number of aircraft in each submenu
     nsplit = len(section)//nrows
-    i = 0 # index for viewing the complete list of aircrafts
+    i = 0  # index for viewing the complete list of aircrafts
 
     while in_menu:
 
-            for (n,a) in enumerate(section[nrows*i:nrows*(i+1)]):
-                print(n,a)
+            for (n, a) in enumerate(section[nrows*i:nrows*(i+1)]):
+                print(n, a)
 
             uchoice = input('{} Next {} Previous {} Back: '.format(nsplit, nsplit+1, nsplit+2))
             uchoice = checkChoice(uchoice)
             if uchoice == nsplit:
-                if i<nsplit:
+                if i < nsplit:
                     i = i + 1
             elif uchoice == (nsplit+1):
-                if i>0:
+                if i > 0:
                     i = i - 1
             elif uchoice == (nsplit+2):
                 in_menu = False
             else:
-                return config[ section[uchoice] ]
+                return config[section[uchoice]]
                 in_menu = False
 
 

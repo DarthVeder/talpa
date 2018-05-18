@@ -10,7 +10,7 @@ Based on "Progetto di Velivoli Parte I", J. Roskam
 import isa.constants
 from math import sqrt
 from log import logger
-from ..FAR25 import Data
+from . import Data
 
 LB2KG = 0.453592
 module_logger = logger.getChild('FAR25')

@@ -28,11 +28,7 @@ def findRegulatedMaximumWeights(acft, apt, rwy, ofp_weight = None, ofp_fuel = No
 
         # LAND
         logger.debug('//* LANDING PERFORMANCE ANALYSIS *//')
-        PLLM = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC, unit)
-        logger.debug('f    PLLM ({})     FLAG'.format(unit))
-        logger.debug('----------------------')
-        for f in sorted(PLLM.keys()):
-            logger.debug('{:2d} {:6.0f} {}'.format(f, PLLM[f].W, PLLM[f].flag))
+        PLLM, LND_flap_setting = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC, unit)
 
         # Finding minimum takeoff mass allowed
         PLTOM = acft.getValue('MTOM')
@@ -40,23 +36,22 @@ def findRegulatedMaximumWeights(acft, apt, rwy, ofp_weight = None, ofp_fuel = No
             PLTOM = FLTOM
         if PLTOM > WAT:
             PLTOM = WAT
+
         MLM = acft.getValue('MLM')
-        for key in PLLM.keys():
-            weight, flag = PLLM[key]
-            if MLM > weight:
-                MLM = weight
+        if MLM > PLLM:
+                MLM = PLLM
 
         max_weights = []
         max_weights.append(acft.getValue('MZFM') + ofp_fuel['TOF'])
-        max_weights.append(acft.getValue('MTOM'))
-        max_weights.append(acft.getValue('MLM') + ofp_fuel['DEST'])
+        max_weights.append(PLTOM)
+        max_weights.append(MLM + ofp_fuel['DEST'])
         RTOW = min(max_weights)
 
         logger.info('MAX ZFM  MAX TOM  MAX LM')
         logger.info('{:6.0f}    {:6.0f}    {:6.0f}'.format(*max_weights))
         logger.info('MIN: {:6.0f}'.format(RTOW))
     elif acft.getString('certification') == 'FAR23':
-        logger.error('FAR23 mnot yet implemented')
+        logger.error('FAR23 not yet implemented')
         exit(1)
 
 

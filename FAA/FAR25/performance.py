@@ -7,13 +7,14 @@ Aircraft masses estimation using FAR25 for:
 
 Based on "Progetto di Velivoli Parte I", J. Roskam
 """
-from collections import namedtuple
 import isa.constants
 from math import sqrt
 from log import logger
+from ..FAR25 import Data
 
 LB2KG = 0.453592
 module_logger = logger.getChild('FAR25')
+
 
 def checkUnit(W, unit):
     if unit != 'lb':
@@ -24,15 +25,13 @@ def checkUnit(W, unit):
 
 def takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
     # sTOFL = 37.5 * W/S|TO / (sigma*CLmaxTO*T/W|TO) = 37.5 W^2/(S*sigma*CLmaxTO*T)
-
-    Data = namedtuple('Data', 'rwyID W')
     to_flap = acft.takeoffFlaps()
     # Airport density ratio
     qnh_Pa = qnh_hPa * 100.0
     T_K = T_degC + 273.15
     sigma = isa.sigma(qnh_Pa, T_K)
 
-    weight_vs_flap = {}
+    weight_vs_rwy_id_flap = {}
     for f in to_flap:
         CLmaxTO = acft.CLmax(f)
         S = acft.getValue('S')
@@ -46,26 +45,30 @@ def takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
             RTOW = sqrt(TOP25 * S * sigma * CLmaxTO * T)
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            weight_vs_flap[(r.id, f)] = RTOW
+            weight_vs_rwy_id_flap[(r.id, f)] = RTOW
 
     module_logger.debug('rwyID  flap  FLTOM ({})'.format(unit))
-    for rwy_id, f in sorted(weight_vs_flap.keys()):
-        module_logger.debug('{:3s}      {:2d}   {:6.0f}'.format(rwy_id, f, weight_vs_flap[(rwy_id, f)]))
+    for rwy_id, f in sorted(weight_vs_rwy_id_flap.keys()):
+        module_logger.debug('{:3s}      {:2d}   {:6.0f}'.format(rwy_id, f, weight_vs_rwy_id_flap[(rwy_id, f)]))
 
-    max_allowed_weight = max(weight_vs_flap.values())
-    key_max = -1
-    for key, value in weight_vs_flap.items():
-        if value == max_allowed_weight:
-            key_max = key
-    module_logger.debug('Recommended  maximum weight: {} for rwy {} and flap setting {}'.format(max_allowed_weight, *key_max))
+    weight_vs_flap = {}
+    for key, weight in weight_vs_rwy_id_flap.items():
+        rwy_id , f = key
+        if f not in weight_vs_flap.keys():
+            weight_vs_flap[f] = Data(W=weight, flag='')
+        else:
+            if weight < weight_vs_flap[f].W:
+                weight_vs_flap[f] = Data(W=weight, flag='')
 
-    return max_allowed_weight, key_max
+    max_allowed_weight, flap_max_allowed_weight = findMaxAllowedWeight(weight_vs_flap)
+    module_logger.debug('Recommended  maximum weight  {} and flap setting {}'.format(max_allowed_weight, flap_max_allowed_weight))
+
+    return max_allowed_weight, flap_max_allowed_weight
 
 
 def climb(acft, qnh_hPa, T_degC, unit='lb'):
     # Preparing dictionary with RTOW for different configurations
     weight_vs_flap = {}
-    Data = namedtuple('Data', 'W flag')
     to_flap = acft.takeoffFlaps()
     for f in to_flap:
         weight_vs_flap[f] = Data(W=acft.getValue('MTOM'), flag='NO LIM')
@@ -74,14 +77,9 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         weight_vs_flap[0] = Data(W=acft.getValue('MTOM'), flag='NO LIM')
 
     # Retrieving main aircraft data
-    MTOM = acft.getValue('MTOM')
-    DOW = acft.getValue('DOM')
     delta = qnh_hPa / 1013.15
     sigma = isa.sigma(qnh_hPa * 100, T_degC + 273.15)
-    rho = sigma * isa.constants.rhoSLUK
     neng = acft.getValue('number_of_engines')
-    S = acft.getValue('S')
-    flag = 'NO LIM'
 
     # Starting check on different climb OEI
     # FAR25.111 (OEI)
@@ -153,13 +151,12 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     # SID 3.3% OEI climb gradient
     sid_climb_angle = {2: 0.033, 3: 0.033, 4: 0.033}
     gear = 0
-    f = 0
     for f in to_flap:
         CLmax = acft.CLmax(f)
         CLTO = CLmax / (1.2 * 1.2)  # @ V2 = 1.2VS1g
         CD = acft.CD(CLTO, f, gear)
         E = CLTO / CD
-        coeff = neng / (neng - 1.0) * (1. / E + second_climb_segment_angle[neng])
+        coeff = neng / (neng - 1.0) * (1.0 / E + sid_climb_angle[neng])
         RTOW = acft.Thrust(delta) / coeff
         if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
@@ -172,35 +169,21 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
     for f in sorted(weight_vs_flap.keys()):
         module_logger.debug('{:2d} {:6.0f} {}'.format(f, weight_vs_flap[f].W, weight_vs_flap[f].flag))
 
-    max_allowed_weight = 0.0
-    flap_max_weight = 0
-    for f in weight_vs_flap.keys():
-        if weight_vs_flap[f].W > max_allowed_weight:
-            max_allowed_weight = weight_vs_flap[f].W
-            flap_max_weight = f
+    max_allowed_weight, flap_max_allowed_weight = findMaxAllowedWeight(weight_vs_flap)
 
-    module_logger.debug('Recommended climb weight {} and flap {}'.format(max_allowed_weight, flap_max_weight))
-
-    return max_allowed_weight, flap_max_weight
-
+    return max_allowed_weight, flap_max_allowed_weight
 
 def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
     # Preparing dictionary with RTOW for different configurations
-    result = {}
-    Data = namedtuple('Data', 'W flag')
+    weight_vs_flap = {}
     land_flap = acft.landingFlaps()
     for f in land_flap:
-        result[f] = Data(W=1.0e8, flag='None')
+        weight_vs_flap[f] = Data(W=1.0e8, flag='None')
 
     # Retrieving main aircraft data
-    MTOM = acft.getValue('MTOM')
-    DOW = acft.getValue('DOM')
     delta = qnh_hPa / 1013.15
     sigma = isa.sigma(qnh_hPa * 100, T_degC + 273.15)
-    rho = sigma * isa.constants.rhoSLUK
     neng = acft.getValue('number_of_engines')
-    S = acft.getValue('S')
-    flag = 'No limits'
 
     # FAR25.119 (AEO)
     initial_ramp_angle = {2: 0.032, 3: 0.032, 4: 0.032}
@@ -212,11 +195,11 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         E = CLLND / CD
         coeff = (1. / E + initial_ramp_angle[neng])
         RTOW = acft.Thrust(delta) / coeff
-        if RTOW < result[f].W:
+        if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
             flag = 'BALKED LANDING AEO'
-            result[f] = Data(RTOW, flag)
+            weight_vs_flap[f] = Data(RTOW, flag)
 
     # FAR25.121 (OEI)
     initial_ramp_angle = {2: 0.021, 3: 0.024, 4: 0.027}
@@ -228,13 +211,13 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         E = CLLND / CD
         coeff = neng / (neng - 1.0) * (1. / E + initial_ramp_angle[neng])
         RTOW = acft.Thrust(delta) / coeff
-        if RTOW < result[f].W:
+        if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
             flag = 'BALKED LANDING OEI'
-            result[f] = Data(RTOW, flag)
+            weight_vs_flap[f] = Data(RTOW, flag)
 
-    # MISSED APPROACH IFR GRADIENT (OEI)
+    # MISSED APPROACH IFR GRADIENT (AEI)
     initial_ramp_angle = {2: 0.025, 3: 0.025, 4: 0.025}
     gear = 1
     for f in land_flap:
@@ -244,10 +227,28 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         E = CLLND / CD
         coeff = (1. / E + initial_ramp_angle[neng])
         RTOW = acft.Thrust(delta) / coeff
-        if RTOW < result[f].W:
+        if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
             flag = 'IFR MISSED APPROACH AEO'
-            result[f] = Data(RTOW, flag)
+            weight_vs_flap[f] = Data(RTOW, flag)
 
-    return result
+    module_logger.debug('f    PLLM ({})     FLAG'.format(unit))
+    module_logger.debug('----------------------')
+    for f in sorted(weight_vs_flap.keys()):
+        module_logger.debug('{:2d} {:6.0f} {}'.format(f, weight_vs_flap[f].W, weight_vs_flap[f].flag))
+
+    max_allowed_weight, flap_max_allowed_weight = findMaxAllowedWeight(weight_vs_flap)
+
+    return max_allowed_weight, flap_max_allowed_weight
+
+
+def findMaxAllowedWeight(weight_vs_flap):
+    max_allowed_weight = 0.0
+    flap_max_allowed_weight = 0
+    for f in weight_vs_flap.keys():
+        if weight_vs_flap[f].W > max_allowed_weight:
+            max_allowed_weight = weight_vs_flap[f].W
+            flap_max_allowed_weight = f
+
+    return max_allowed_weight, flap_max_allowed_weight

@@ -24,10 +24,11 @@ import airports
 
 AIRCRAFT = 1
 AIRPORT = 2
+LOAD_OFP = 5
 COMPUTE = 3
 EXIT = 4
 main_menu = {AIRCRAFT: 'Select Aircraft', AIRPORT: 'Select Airport',
-             COMPUTE: 'Perform Analysis', EXIT: 'Exit'}
+             COMPUTE: 'Perform Analysis', EXIT: 'Exit', LOAD_OFP: 'Load FSBUILD OFP'}
 
 ICAO = 1
 QNH = 2
@@ -53,6 +54,7 @@ def build():
     in_menu = True
     aircraft_is_set = False
     airport_is_set = False
+    load_ofp = False
     qnh_hPa = 1013.15
     T_degC = 15.0
 
@@ -73,6 +75,8 @@ def build():
             acft = aircraft.Aircraft(acft_config)
             acft.print()
             aircraft_is_set = True
+        elif uchoice == LOAD_OFP:
+            pass
         elif uchoice == COMPUTE:
             if airport_is_set and aircraft_is_set:
                 return acft, apt, rwy, qnh_hPa, T_degC
@@ -81,6 +85,8 @@ def build():
                     print('Airport not set')
                 if not aircraft_is_set:
                     print('Aircraft not set')
+                if not load_ofp:
+                    print('OFP not loaded')
         elif uchoice == EXIT:
             in_menu = False
             exit(0)

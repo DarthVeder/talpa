@@ -24,7 +24,7 @@ class Aircraft:
 
         return acft
 
-    def aircraftClass(self):
+    def findAircraftClass(self):
         self.logger.info('Set Aicraft class ')
         S = self.getValue('S')
         MLM = self.getValue('MLM')
@@ -60,8 +60,8 @@ class Aircraft:
         b = self.getValue('b')
         S = self.getValue('S')
         self.config['AR'] = str((b * b) / S)
-        self.aircraftClass()
-        self.print()
+        self.findAircraftClass()
+        #self.print()
 
     def print(self):
         self.logger.info('/** AIRCRAFT DATA **/')

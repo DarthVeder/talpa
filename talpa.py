@@ -20,53 +20,39 @@ def findRegulatedMaximumWeights(acft, apt, rwy, ofp_weight = None, ofp_fuel = No
         logger.debug('ICAO = {} QNH {} hPa TEMP {} degC'.format(apt.id, qnh_hPa, T_degC))
         # TAKEOFF
         logger.debug(' //* TAKEOFF ANALYSIS *//')
-        PLTOM = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit)
-        logger.debug('rwyID  flap  PLTOM ({})'.format(unit))
-        for rwy_id, f in sorted(PLTOM.keys()):
-            logger.debug('{:3s}      {:2d}   {:6.0f}'.format(rwy_id, f, PLTOM[(rwy_id, f)]))
+        FLTOM, TO_flap_setting = FAA.FAR25.performance.takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit)
 
         # CLIMB
         logger.debug(' //* CLIMB PERFORMANCE ANALYSIS *//')
-        PLCLIMB = FAA.FAR25.performance.climb(acft, qnh_hPa, T_degC, unit)
-        logger.debug('f    PLCLIMB ({}) FLAG'.format(unit))
-        logger.debug('----------------------')
-        for f in sorted(PLCLIMB.keys()):
-            logger.debug('{:2d} {:6.0f} {}'.format(f, PLCLIMB[f].W, PLCLIMB[f].flag))
+        WAT, CLB_flap_setting = FAA.FAR25.performance.climb(acft, qnh_hPa, T_degC, unit)
 
         # LAND
         logger.debug('//* LANDING PERFORMANCE ANALYSIS *//')
-        PLLM = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC, unit)
-        logger.debug('f    PLLM ({})     FLAG'.format(unit))
-        logger.debug('----------------------')
-        for f in sorted(PLLM.keys()):
-            logger.debug('{:2d} {:6.0f} {}'.format(f, PLLM[f].W, PLLM[f].flag))
+        PLLM, LND_flap_setting = FAA.FAR25.performance.landing(acft, apt, rwy, qnh_hPa, T_degC, unit)
 
         # Finding minimum takeoff mass allowed
-        RTOM = acft.getValue('MTOM')
-        for key in PLTOM.keys():
-            if RTOM > PLTOM[key]:
-                RTOM = PLTOM[key]
-        for key in PLCLIMB.keys():
-            weight, flag = PLCLIMB[key]
-            if RTOM > weight:
-                RTOM = weight
-        TOM = acft.getValue('MLM')
-        for key in PLLM.keys():
-            weight, flag = PLLM[key]
-            if TOM > weight:
-                TOM = weight
+        PLTOM = acft.getValue('MTOM')
+        if PLTOM > FLTOM:
+            PLTOM = FLTOM
+        if PLTOM > WAT:
+            PLTOM = WAT
 
-        temp_RTOW = []
-        temp_RTOW.append(acft.getValue('MZFM') + ofp_fuel['TOF'])
-        temp_RTOW.append(acft.getValue('MTOM'))
-        temp_RTOW.append(acft.getValue('MLM') + ofp_fuel['DEST'])
-        RTOW = min(temp_RTOW)
+        MLM = acft.getValue('MLM')
+        if MLM > PLLM:
+                MLM = PLLM
 
-        logger.info('ZFM LIM  MTOM LIM  MLM LIM')
-        logger.info('{:6.0f}    {:6.0f}    {:6.0f}'.format(*temp_RTOW))
+        max_weights = []
+        max_weights.append(acft.getValue('MZFM') + ofp_fuel['TOF'])
+        max_weights.append(PLTOM)
+        max_weights.append(MLM + ofp_fuel['DEST'])
+        RTOW = min(max_weights)
+
+        logger.info('MAX ZFM  MAX TOM  MAX LM')
+        logger.info('{:6.0f}    {:6.0f}    {:6.0f}'.format(*max_weights))
         logger.info('MIN: {:6.0f}'.format(RTOW))
     elif acft.getString('certification') == 'FAR23':
-        pass
+        logger.error('FAR23 not yet implemented')
+        exit(1)
 
 
 
@@ -75,8 +61,7 @@ if __name__ == '__main__':
     logger.debug('Building menu')
     import menu.main
     debug = True
-    read_ofp = True
-    logger.debug('Run type: debug= %s; read_ofp= %s',debug, read_ofp)
+    logger.debug('Run type: debug = %s', debug)
     apt = []
     rwy = []
 
@@ -84,23 +69,15 @@ if __name__ == '__main__':
         qnh_hPa = 1013.15
         T_degC = 15.0
         acft = Aircraft.readConfiguration('aircrafts_debug.cfg', 'B738RAM')
-
-        # acft.print()
-        if read_ofp:
-            # Reading OFP
-            file_in = r'C:\home\talpa\fsbroute.log'
-            ofp_weight, ofp_route, ofp_fuel, old_ofp = fsb.read(file_in, 'kg')
-            fsb.printOFPData()
-            airports.database.buildDatabase()
-            for key in ofp_route.keys():
-                apt_, rwy_ = airports.database.extractAirportData(ofp_route[key])
-                apt.append(apt_)
-                rwy.append(rwy_)
-        else:
-            apt = airports.database.airport(id='LIPE', altitude=123.0, magvar=1.5)
-            rwy = [airports.database.runway(id='12', hgd_t=116.75, length_ft=9179.0, type='Asphalt'),
-                   airports.database.runway(id='30', hgd_t=296.75, length_ft=9179.0, type='Asphalt')]
-
+        # Reading OFP
+        file_in = 'fsbroute.log'
+        ofp_weight, ofp_route, ofp_fuel, old_ofp = fsb.read(file_in, 'kg')
+        fsb.printOFPData()
+        airports.database.buildDatabase()
+        for key in ofp_route.keys():
+            apt_, rwy_ = airports.database.extractAirportData(ofp_route[key])
+            apt.append(apt_)
+            rwy.append(rwy_)
     else:
         acft, apt, rwy, qnh_hPa, T_degC = menu.main.build()
 

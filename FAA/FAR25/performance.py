@@ -24,7 +24,7 @@ def checkUnit(W, unit):
 
 
 def takeoff(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
-    # sTOFL = 37.5 * W/S|TO / (sigma*CLmaxTO*T/W|TO) = 37.5 W^2/(S*sigma*CLmaxTO*T)
+    # sTOFL = 37.5 * (W/S)_TO / (sigma*CLmaxTO*(T/W)_TO) = 37.5 W^2/(S*sigma*CLmaxTO*T)
     to_flap = acft.takeoffFlaps()
     # Airport density ratio
     qnh_Pa = qnh_hPa * 100.0
@@ -129,7 +129,7 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
         if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            flag = 'SECOND'
+            flag = '2ND SEGMENT'
             weight_vs_flap[f] = Data(RTOW, flag)
 
     # enroute climb
@@ -173,6 +173,7 @@ def climb(acft, qnh_hPa, T_degC, unit='lb'):
 
     return max_allowed_weight, flap_max_allowed_weight
 
+
 def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
     # Preparing dictionary with RTOW for different configurations
     weight_vs_flap = {}
@@ -198,7 +199,7 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            flag = 'BALKED LANDING AEO'
+            flag = 'BALKED AEO'
             weight_vs_flap[f] = Data(RTOW, flag)
 
     # FAR25.121 (OEI)
@@ -214,7 +215,7 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            flag = 'BALKED LANDING OEI'
+            flag = 'BALKED OEI'
             weight_vs_flap[f] = Data(RTOW, flag)
 
     # MISSED APPROACH IFR GRADIENT (AEI)
@@ -230,7 +231,7 @@ def landing(acft, apt, rwy, qnh_hPa, T_degC, unit='lb'):
         if RTOW < weight_vs_flap[f].W:
             RTOW = acft.checkWeight(RTOW)
             RTOW = checkUnit(RTOW, unit)
-            flag = 'IFR MISSED APPROACH AEO'
+            flag = 'IFR MISSED APPROACH'
             weight_vs_flap[f] = Data(RTOW, flag)
 
     module_logger.debug('f    PLLM ({})     FLAG'.format(unit))

@@ -9,6 +9,10 @@ import fsbuild
 ofp_weight, ofp_route, old_ofp = fsbuild.read(file)
 '''
 
+from log import logger
+
+module_logger = logger.getChild('FSBUILD')
+
 ofp_weight = {'PAYLOAD': -1, 'ZFW': -1, 'TOGWT': -1, 'LDGWT': -1}
 ofp_fuel = {'TAXI': 0.0}
 ofp_route = {}
@@ -19,6 +23,8 @@ def read(file_in, unit='lb'):
     if unit == 'kg':
         C_FACTOR = 1.0/0.453592
     old_ofp = []
+    module_logger.info('Reading OFP FSBUILD with unit {}'.format(unit))
+
     with open(file_in, 'r') as f:
         line_value_tom = False
         for line in f:

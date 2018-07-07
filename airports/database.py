@@ -3,7 +3,9 @@ import os
 import sys
 import progressbar
 import collections
+from log import logger
 
+module_logger = logger.getChild('DATABASE')
 # Useful containers
 airport = collections.namedtuple('airport', 'id altitude magvar')
 runway = collections.namedtuple('runway', 'id hgd_t length_ft type')
@@ -37,7 +39,7 @@ def parseXMLfile(xml_file):
     # apt[1]: list[namedtuple runway]
     apt = []
 
-    print('Parsing "{}"'.format(xml_file))
+    module_logger.info('Parsing "{}"'.format(xml_file))
     bar = progressbar.ProgressBar(widgets=widgets,
                                   max_value=len(apt_list))
     i = 0
@@ -71,7 +73,7 @@ def buildDatabase(force_rebuild=False):
     if os.path.isfile(xml_file):
         apt = parseXMLfile(xml_file)
     else:
-        print('"{}" does not exist. Stopping. Run MakeRunways.exe'.format(xml_file))
+        module_logger.error('"{}" does not exist. Stopping. Run MakeRunways.exe'.format(xml_file))
         exit(1)
 
     global conn
@@ -85,9 +87,9 @@ def buildDatabase(force_rebuild=False):
     is_new = False
 
     if os.path.isfile(sql_file):
-        print('Found "{}"'.format(sql_file))
+        module_logger.info('Found "{}"'.format(sql_file))
     else:
-        print('"{}" not found. Rebuilding Airports database'.format(sql_file))
+        module_logger.info('"{}" not found. Rebuilding Airports database'.format(sql_file))
         is_new = True
 
     # Forcing DB rebuild
@@ -171,7 +173,7 @@ def extractAirportData(icao):
         for r in c.execute(cmd, (airportid,)):
             apt_rwy.append(r[:-1])
     except TypeError:
-        print('Airport {} not found'.format(icao))
+        module_logger.error('Airport {} not found'.format(icao))
         exit(1)
 
     return airport(*apt_data), [runway(*r) for r in apt_rwy]

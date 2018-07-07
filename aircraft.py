@@ -25,7 +25,6 @@ class Aircraft:
         return acft
 
     def findAircraftClass(self):
-        self.logger.info('Set Aicraft class ')
         S = self.getValue('S')
         MLM = self.getValue('MLM')
         f_deg = self.landingFlaps()[-1]
@@ -43,7 +42,7 @@ class Aircraft:
             acft_class = 'D'
         elif kVat >= 166:
             acft_class = 'E'
-        self.logger.debug('class: %s', acft_class)
+        self.logger.debug('Set Aircraft class {:1s}'.format(acft_class))
 
         self.config['class'] = acft_class
 
@@ -70,7 +69,7 @@ class Aircraft:
         self.logger.info('/** DONE **/')
 
     def Thrust(self, delta, derate=0.0):
-        return (1.0 - derate / 100.0) * self.getValue('Tse') * self.getValue('number_of_engines')
+        return (1.0 - derate / 100.0) * self.getValue('Tse') * self.getValue('number_of_engines') * delta
 
     def Power(self, delta):
         return self.getValue('Pse') * self.getValue('number_of_engines')
